@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/mohamedbstar413/test-git
     targetRevision: main
-    path: k8s/iti-gp-backend-chart
+    path: iti-gp-backend-chart
     helm:
       releaseName: iti-backend-release
         
