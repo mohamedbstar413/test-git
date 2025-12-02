@@ -5,23 +5,25 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://github.com/mohamedbstar413/test-git
-        revision: main
-        files:
-          - path: "argocd/argocd-applications/*.yaml"
+  - git:
+      repoURL: https://github.com/mohamedbstar413/test-git.git
+      revision: main
+      directories:
+        - path: argocd/argocd-applications/*
   template:
     metadata:
-      name: 'app-{{path.filename}}'
+      name: '{{.path.basename}}'
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: default
       source:
         repoURL: https://github.com/mohamedbstar413/test-git.git
         targetRevision: main
-        path: '{{path}}'
+        path: '{{path}}'          # value from app.yaml
       destination:
         server: https://kubernetes.default.svc
-        namespace: argocd
+        namespace: '{{namespace}}'   # value from app.yaml
       syncPolicy:
         automated:
           prune: true
