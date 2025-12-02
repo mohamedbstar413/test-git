@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-service
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  type: {{ .Values.service.type  }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.controller.port }}
+    {{- if .Values.service.nodePort }}
+    nodePort: {{ .Values.service.nodePort  }}
+    {{- end }}
+
+  selector:
+{{- include "backend.selectorLabels" . | nindent 4}}

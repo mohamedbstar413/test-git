@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: {{ .Values.controller.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "backend.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.controller.serviceAccountName }}
+      initContainers:
+        - name: secret-mounter #mounts aws secrets and waits until mysql starts
+          image: mysql:8.0
+          command:
+            - sh
+            - -c
+            - |
+              DB_USER=$(cat /mnt/secrets/username)
+              DB_PASSWORD=$(cat /mnt/secrets/password)
+              until mysql -h {{ .Values.database.host }} -P {{ .Values.database.port }} -u $DB_USER -p$DB_PASSWORD -e "SELECT 1"; do
+                echo "Waiting for database..."
+                sleep 5
+              done
+          volumeMounts:
+            - name: secrets
+              mountPath: /mnt/secrets
+        
+      containers:
+        - name: {{ .Values.controller.containerName }}
+          image: {{ .Values.controller.image }}
+          ports:
+            - containerPort: {{ .Values.controller.port }}
+          {{- if .Values.controller.env }}
+          env:
+            {{- toYaml .Values.controller.env | nindent 12 }}
+          {{- end }}
+          
+          resources:
+            {{- toYaml .Values.controller.resources | nindent 12 }}
+          
+          
+          
+          volumeMounts:
+            - name: secrets
+              mountPath: /mnt/secrets
+      
+      {{- if .Values.controller.affinity }}
+      affinity:
+        {{- toYaml .Values.controller.affinity | nindent 8 }}
+      {{- end }}
+      
+      volumes:
+        {{- toYaml .Values.controller.volumes | nindent 8 }}

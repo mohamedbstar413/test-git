@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.controller.name }}
+  namespace: db-ns
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  serviceName: {{ .Values.controller.serviceName }}
+  replicas: {{ .Values.controller.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "db.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "db.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.controller.containerName }}
+        image: {{ .Values.controller.containerImage }}
+        ports:
+        - containerPort: {{ .Values.controller.containerPort }}
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: admin123
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: db-config
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+          subPath: init.sql
+        - name: db-config
+          mountPath: /etc/mysql/my.cnf
+          subPath: my.cnf
+
+        resources:
+          requests:
+            memory: 400Mi
+            cpu: 0.5
+        livenessProbe:
+            tcpSocket:
+                port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 10
+        readinessProbe:
+            tcpSocket:
+                port: 3306
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: db-config
+          configMap:
+            name: db-config
