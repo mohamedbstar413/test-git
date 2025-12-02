@@ -6,7 +6,7 @@ metadata:
 spec:
   generators:
     - git:
-        repoURL: https://github.com/mohamedbstar413/iti-graduation-project.git
+        repoURL: https://github.com/mohamedbstar413/test-git
         revision: main
         files:
           - path: "argocd/argocd-applications/*.yaml"
@@ -16,7 +16,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/mohamedbstar413/iti-graduation-project.git
+        repoURL: https://github.com/mohamedbstar413/test-git.git
         targetRevision: main
         path: '{{path}}'
       destination:
